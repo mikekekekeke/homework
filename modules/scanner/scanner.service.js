@@ -133,7 +133,9 @@ class ScannerService extends Service {
                 _id: 1,
                 name: 1,
                 city: 1,
-                road: 1
+                road: 1,
+                coordinates: 1,
+                status: 1
             }
         }, {
             $facet: {
