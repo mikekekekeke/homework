@@ -11,6 +11,15 @@ const { ObjectId } = require('mongodb');
 const { schemas, validateInput } = require('../../utils/validation');
 
 class ScannerService extends Service {
+    /**
+     * Verifies an imei of scanner.
+     * @param {String} imei Imei of scanner.
+     */
+    async verifyImei(imei) {
+        imei = validateInput(imei, schemas.string, 'IMEI must be a string');
+        const scannerExist = await Scanner.exists({ imei });
+        if (!scannerExist) throw new NotFoundError('Scanner', ERRORS.SUB_CODE.SCANNER.NOT_FOUND);
+    }
 
     /**
      * Returns scanner default status.
