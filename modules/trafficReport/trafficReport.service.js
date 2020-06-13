@@ -3,9 +3,59 @@ const trafficReport = require('./trafficReport.model');
 const scannerTraffic = require('../scannerTraffic/scannerTraffic.model');
 const Scanner = require('../scanner/scanner.model');
 const { SCANNER: scannerConfig } = require('../../config/model_constants');
+const { schemas, validateInput } = require('../../utils/validation');
+const { mongoose } = require('../../core/database');
 
 
 class TrafficReportService extends Service {
+
+    /**
+     * Fetches a paginated list of scanners.
+     * @param {Number} [limit] Optional record limit.
+     * @param {Number} [offset] Optional record offset,
+     * @param {Object} [filters] Optional city and road filters.
+     */
+    async fetchReports(limit = 100, offset = 0, filters = {}) {
+
+        limit = validateInput(limit, schemas.limit);
+        offset = validateInput(offset, schemas.offset);
+        filters = validateInput(filters, schemas.scanner.traffic.report.filters);
+
+        if (filters.trafficNumber) filters._id = mongoose.Types.ObjectId(filters.trafficNumber);
+        delete filters.trafficNumber;
+        if (!filters.date) {
+            delete filters.date;
+        } else filters.date = filters.date.getTime();
+        if (!filters.road) delete filters.road;
+
+        const result = await trafficReport.aggregate([{
+            $match: filters
+        }, {
+            $sort: { created_at: -1 }
+        }, {
+            $project: {
+                _id: 1,
+                road: 1,
+                date: 1,
+                totalPerWeek: 1
+            }
+        }, {
+            $facet: {
+                trafficReport: [{
+                    $skip: offset
+                }, {
+                    $limit: limit
+                }],
+
+                count: [{
+                    $count: 'count'
+                }]
+            }
+        }]).exec();
+
+        return { trafficReport: _.get(result, '[0].trafficReport', []), count: _.get(result, '[0].count[0].count', 0) };
+
+    }
 
     /**
      * Generates weekly report and saves it.
