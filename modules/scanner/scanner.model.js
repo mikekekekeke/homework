@@ -22,7 +22,7 @@ const ScannerSchema = new Schema({
     status: {
         type: String,
         enum: scannerConfig.STATUSES.asArray,
-        default: scannerConfig.defaultStatus,
+        default: scannerConfig.DEFAULT_STATUS,
     },
     coordinates: {
         type: String,

@@ -5,6 +5,7 @@ const Migration = require('../modules/misc/migration.model');
 
 module.exports = {
     schedule: -1,
+    enabled: true,
     async handler() {
 
         let [ migration_files, migrations_ran ] = await Promise.all([

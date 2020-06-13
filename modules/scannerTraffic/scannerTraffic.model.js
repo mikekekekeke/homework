@@ -7,7 +7,7 @@ const ScannerSchema = new Schema({
         required: true,
     },
     hourTimestamp: {
-        type: String,
+        type: Number,
         required: true,
     },
     traffic: {
@@ -22,7 +22,7 @@ const ScannerSchema = new Schema({
     },
 }, { timestamps: { updatedAt: 'updated_at' }, versionKey: false });
 
-ScannerSchema.index({ hourTimestamp: 1 }, { unique: true });
+ScannerSchema.index({ hourTimestamp: 1, imei: 1 }, { unique: true });
 
 ScannerSchema.methods.toWeb = () => this.toJSON();
 

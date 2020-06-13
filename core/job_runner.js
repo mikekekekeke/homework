@@ -17,7 +17,7 @@ const setupJobRunner = async () => {
     const ERRORS = require('../config/errors');
 
     CONFIG.SERVER_MODE = SERVER_MODE.CRON;
-    
+
     await db.__setup();
 
     const migrator = require('../jobs/migrator'); //Run migrator first.
@@ -35,35 +35,36 @@ const setupJobRunner = async () => {
     jobs.forEach(job_file => {
         const job = require(`../jobs/${job_file}`);
 
-        log.info(`Scheduling "${_.startCase(job_file.replace('.js', ''))}" to "${job.schedule}"`);
+        if (job.enabled) {
+            log.info(`Scheduling "${_.startCase(job_file.replace('.js', ''))}" to "${job.schedule}"`);
 
-        if(job.schedule === -1) job.handler();
-        else schedule.scheduleJob(job.schedule, async () => {
+            if (job.schedule === -1) job.handler();
+            else schedule.scheduleJob(job.schedule, async () => {
 
-            const job_name = _.startCase(job_file.replace('.js', ''));
+                const job_name = _.startCase(job_file.replace('.js', ''));
 
-            log.info(`Running job "${job_name}"...`);
-            
-            try {
+                log.info(`Running job "${job_name}"...`);
 
-                const start = Date.now();
+                try {
 
-                const result = await job.handler();
+                    const start = Date.now();
 
-                log.info(`Job "${job_name}" finished in ${((Date.now() - start) / 1000).toFixed(2)}s, with: ${JSON.stringify(result)}`);
+                    const result = await job.handler();
 
-            } catch(e) {
+                    log.info(`Job "${job_name}" finished in ${((Date.now() - start) / 1000).toFixed(2)}s, with: ${JSON.stringify(result)}`);
 
-                log.danger(`Job "${job_name}" failed... error:`);
-                log.danger(e);
-                SystemLogService.logInternalError(e, ERRORS.SUB_CODE.GENERAL.CRON_JOB).to();
-                
-            }
+                } catch (e) {
 
-            return true;
+                    log.danger(`Job "${job_name}" failed... error:`);
+                    log.danger(e);
+                    SystemLogService.logInternalError(e, ERRORS.SUB_CODE.GENERAL.CRON_JOB).to();
 
-        });
+                }
 
+                return true;
+
+            });
+        } else log.info(`Job "${_.startCase(job_file.replace('.js', ''))}" not enabled for executing.`);
     });
 
 };

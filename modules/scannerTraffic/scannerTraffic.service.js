@@ -1,26 +1,15 @@
 const Service = require('../../classes/Service');
 
 const scannerTraffic = require('./scannerTraffic.model');
-const Scanner = require('../scanner/scanner.model');
 
-const ERRORS = require('../../config/errors');
 const { schemas, validateInput } = require('../../utils/validation');
 
 class ScannerTrafficService extends Service {
-    /**
-     * Verifies an imei of scanner.
-     * @param {String} imei Imei of scanner.
-     */
-    async verifyImei(imei) {
-        imei = validateInput(imei, schemas.string, 'IMEI must be a string');
-        const scannerExist = await Scanner.exists({ imei });
-        if (!scannerExist) throw new NotFoundError('Scanner', ERRORS.SUB_CODE.SCANNER.NOT_FOUND);
-    }
 
     /**
      * Adds a scanner traffic scans.
      * @param {String} imei IMEI of the scanner.
-     * @param {String} scans Scanner's records to save.
+     * @param {Array} scans Scanner's records to save.
      */
     async saveScans(imei, scans) {
 
@@ -102,4 +91,4 @@ class ScannerTrafficService extends Service {
     }
 }
 
-module.exports = new ScannerTrafficService('ScannerTrafficService');
+module.exports = new ScannerTrafficService('ScannerTraffic');
