@@ -42,7 +42,14 @@ module.exports = {
                 'active', 'inactive'
             ]
         },
-        defaultStatus: 'active',
+        DEFAULT_STATUS: 'active',
+        DIRECTIONS: {
+            asObject: {
+                IN: 'in',
+                OUT: 'out',
+            },
+            asArray: [ 'in', 'out' ],
+        }
     }),
 
 };

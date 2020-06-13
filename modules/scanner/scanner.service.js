@@ -25,7 +25,7 @@ class ScannerService extends Service {
      * Returns scanner default status.
      */
     getDefaultScannerStatus() {
-        return SCANNER.defaultStatus;
+        return SCANNER.DEFAULT_STATUS;
     }
     /**
      * Adds a new scanner for a combination of city and road.
