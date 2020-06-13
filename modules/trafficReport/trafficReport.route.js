@@ -15,5 +15,14 @@ router.get('v1/', auth(), async ctx => {
 
 });
 
+router.get('v1/:report_id', auth(), async ctx => {
+
+  const { report_id } = ctx.params;
+
+  const [err, scanner] = await trafficReportService.fetchReport(report_id).to();
+
+  return Respond(ctx, err, scanner);
+
+});
 
 module.exports = router;

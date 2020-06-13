@@ -1,7 +1,7 @@
 const { Schema } = require('mongoose');
 const { mongoose } = require('../../core/database');
 
-const ScannerSchema = new Schema({
+const ScannerTrafficSchema = new Schema({
     imei: {
         type: String,
         required: true,
@@ -22,8 +22,8 @@ const ScannerSchema = new Schema({
     },
 }, { timestamps: { updatedAt: 'updated_at' }, versionKey: false });
 
-ScannerSchema.index({ hourTimestamp: 1, imei: 1 }, { unique: true });
+ScannerTrafficSchema.index({ hourTimestamp: 1, imei: 1 }, { unique: true });
 
-ScannerSchema.methods.toWeb = () => this.toJSON();
+ScannerTrafficSchema.methods.toWeb = () => this.toJSON();
 
-module.exports = mongoose.model('ScannerTraffic', ScannerSchema);
+module.exports = mongoose.model('ScannerTraffic', ScannerTrafficSchema);

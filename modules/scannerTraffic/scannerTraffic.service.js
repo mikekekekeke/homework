@@ -1,6 +1,6 @@
 const Service = require('../../classes/Service');
 
-const scannerTraffic = require('./scannerTraffic.model');
+const ScannerTraffic = require('./scannerTraffic.model');
 
 const { schemas, validateInput } = require('../../utils/validation');
 
@@ -16,7 +16,7 @@ class ScannerTrafficService extends Service {
         scans = validateInput(scans, schemas.scanner.traffic.scans);
 
         const trafficGroupedByHourTimestamp = this._splitScansInDayHours(scans);
-        const lastScannerTraffic = await scannerTraffic.findOne({ imei }).sort({_id: 'desc'}).exec();
+        const lastScannerTraffic = await ScannerTraffic.findOne({ imei }).sort({_id: 'desc'}).exec();
 
         const newScannerTraffics = [];
         const timestampKeys = Object.keys(trafficGroupedByHourTimestamp);
@@ -50,7 +50,7 @@ class ScannerTrafficService extends Service {
             })
         });
 
-        await scannerTraffic.create(newScannerTraffics);
+        await ScannerTraffic.create(newScannerTraffics);
 
         return { scans: scanCounter };
     }
