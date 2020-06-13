@@ -6,11 +6,11 @@ const scannerService = require('../modules/scanner/scanner.service');
 module.exports = async (ctx, next) => {
     const { imei: scannerImei } = ctx.request.body;
 
-    try {
-        await scannerService.verifyImei(scannerImei);
-    } catch (e) {
-        return ReE(ctx, e);
-    }
+    const [err, result] = await scannerService.verifyImei(scannerImei).to();
+
+    if(err) return ReE(ctx, err);
+
+    ctx.state.scanner = result.scanner;
 
     return next();
 };

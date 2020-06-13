@@ -3,6 +3,7 @@ const Service = require('../../classes/Service');
 const ScannerTraffic = require('./scannerTraffic.model');
 
 const { schemas, validateInput } = require('../../utils/validation');
+const { SCANNER: scannerConfig } = require('../../config/model_constants');
 
 class ScannerTrafficService extends Service {
 
@@ -10,10 +11,13 @@ class ScannerTrafficService extends Service {
      * Adds a scanner traffic scans.
      * @param {String} imei IMEI of the scanner.
      * @param {Array} scans Scanner's records to save.
+     * @param {String} scannerStatus Scanner's status.
      */
-    async saveScans(imei, scans) {
+    async saveScans(imei, scans, scannerStatus) {
 
         scans = validateInput(scans, schemas.scanner.traffic.scans);
+
+        if (scannerStatus === scannerConfig.STATUSES.asObject.INACTIVE) return { scans: 0 };
 
         const trafficGroupedByHourTimestamp = this._splitScansInDayHours(scans);
         const lastScannerTraffic = await ScannerTraffic.findOne({ imei }).sort({_id: 'desc'}).exec();
@@ -70,7 +74,7 @@ class ScannerTrafficService extends Service {
     /**
      * Splitting scans in hours by timestamps and returns the object with traffic grouped by hour (ASC).
      * It is counting 'scanCounter' as well, in order to count exact new records amount in future logic.
-     * @param {String} scans Scanner's records to split.
+     * @param {Array} scans Scanner's records to split.
      */
     _splitScansInDayHours(scans) {
         const hours = {};

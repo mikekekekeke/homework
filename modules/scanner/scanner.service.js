@@ -17,8 +17,9 @@ class ScannerService extends Service {
      */
     async verifyImei(imei) {
         imei = validateInput(imei, schemas.string, 'IMEI must be a string');
-        const scannerExist = await Scanner.exists({ imei });
-        if (!scannerExist) throw new NotFoundError('Scanner', ERRORS.SUB_CODE.SCANNER.NOT_FOUND);
+        const scanner = await Scanner.findOne({ imei }).exec();
+        if (!scanner) throw new NotFoundError('Scanner', ERRORS.SUB_CODE.SCANNER.NOT_FOUND);
+        return { scanner };
     }
 
     /**
