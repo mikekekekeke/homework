@@ -31,7 +31,7 @@ const WeekSchema = new Schema({
         type: Number,
         required: true,
     },
-});
+}, { _id : false, versionKey: false });
 const TopFiveItemSchema = new Schema({
     timestamp: {
         type: Date,
@@ -46,8 +46,8 @@ const TopFiveItemSchema = new Schema({
         type: Number,
         required: true,
     },
-});
-const ScannerSchema = new Schema({
+}, { _id : false, versionKey: false });
+const TrafficReportSchema = new Schema({
     city: {
         type: String,
         required: true,
@@ -81,6 +81,6 @@ const ScannerSchema = new Schema({
     topFiveHotHours: [TopFiveItemSchema],
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }}, { versionKey: false });
 
-ScannerSchema.methods.toWeb = () => this.toJSON();
+TrafficReportSchema.methods.toWeb = function () {return this.toJSON()};
 
-module.exports = mongoose.model('TrafficReport', ScannerSchema);
+module.exports = mongoose.model('TrafficReport', TrafficReportSchema);

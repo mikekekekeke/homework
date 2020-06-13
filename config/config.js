@@ -66,6 +66,10 @@ module.exports = {
         CACHE_TTL: 10 * 60
     },
 
+    TRAFFIC_REPORT: {
+        CACHE_TTL: 10 * 60
+    },
+
     JOBS: {
         TRAFFIC_REPORT: {
             ENABLED: (process.env.TRAFFIC_REPORT_JOB_ENABLED === true.toString()),

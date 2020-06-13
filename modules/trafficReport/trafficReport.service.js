@@ -1,20 +1,108 @@
 const Service = require('../../classes/Service');
-const trafficReport = require('./trafficReport.model');
-const scannerTraffic = require('../scannerTraffic/scannerTraffic.model');
+
+const TrafficReport = require('./trafficReport.model');
+const ScannerTraffic = require('../scannerTraffic/scannerTraffic.model');
 const Scanner = require('../scanner/scanner.model');
+
 const { SCANNER: scannerConfig } = require('../../config/model_constants');
+const CONFIG = require('../../config/config');
+
+const { mongoose } = require('../../core/database');
+
+const { schemas, validateInput } = require('../../utils/validation');
 
 
 class TrafficReportService extends Service {
 
     /**
+     * Fetches a paginated list of traffic resorts.
+     * @param {Number} [limit] Optional record limit.
+     * @param {Number} [offset] Optional record offset,
+     * @param {Object} [filters] Optional city and road filters.
+     */
+    async fetchReports(limit = 100, offset = 0, filters = {}) {
+
+        limit = validateInput(limit, schemas.limit);
+        offset = validateInput(offset, schemas.offset);
+        filters = validateInput(filters, schemas.scanner.traffic.report.filters);
+
+        if (filters.trafficNumber) filters._id = mongoose.Types.ObjectId(filters.trafficNumber);
+        delete filters.trafficNumber;
+        if (!filters.date) {
+            delete filters.date;
+        } else filters.date = filters.date.getTime();
+        if (!filters.road) delete filters.road;
+
+        const result = await TrafficReport.aggregate([{
+            $match: filters
+        }, {
+            $sort: { created_at: -1 }
+        }, {
+            $project: {
+                _id: 1,
+                road: 1,
+                date: 1,
+                totalPerWeek: 1
+            }
+        }, {
+            $facet: {
+                trafficReport: [{
+                    $skip: offset
+                }, {
+                    $limit: limit
+                }],
+
+                count: [{
+                    $count: 'count'
+                }]
+            }
+        }]).exec();
+
+        return { trafficReport: _.get(result, '[0].trafficReport', []), count: _.get(result, '[0].count[0].count', 0) };
+
+    }
+
+    /**
+     * Fetches traffic report details.
+     * @param {(ObjectId|String)} report_id Traffic report ID.
+     */
+    async fetchReport(report_id) {
+        report_id = validateInput(report_id, schemas.objectId);
+
+        const cached = this.cache.get(String(report_id));
+        if(cached) return cached;
+
+        let trafficReport = await TrafficReport.findById(report_id).exec();
+
+        if(!trafficReport) throw new NotFoundError(`Traffic report (${report_id})`, ERRORS.SUB_CODE.TRAFFIC_REPORT.NOT_FOUND);
+
+        const scanner = await Scanner.findById(trafficReport.scannerId).exec();
+
+        trafficReport = trafficReport.toWeb();
+        delete trafficReport.city;
+        delete trafficReport.scannerId;
+        delete trafficReport.created_at;
+        delete trafficReport.updated_at;
+        // Unfortunately, scanners dont have a model.
+        trafficReport.scanner = {
+            _id: scanner._id,
+            imei: scanner.imei,
+            coordinates: scanner.coordinates,
+        }
+
+        this.cache.set(String(report_id), trafficReport, CONFIG.TRAFFIC_REPORT.CACHE_TTL);
+
+        return trafficReport;
+    }
+
+    /**
      * Generates weekly report and saves it.
      */
     async generateReport() {
-        const lastScannerTraffic = await trafficReport.findOne({}).sort({ _id: -1 }).exec();
+        const lastScannerTraffic = await TrafficReport.findOne({}).sort({ _id: -1 }).exec();
         let dateFrom;
-        if(lastScannerTraffic && lastScannerTraffic.Date) {
-            dateFrom = new Date(lastScannerTraffic.Date);
+        if(lastScannerTraffic && lastScannerTraffic.date) {
+            dateFrom = new Date(lastScannerTraffic.date);
         } else {
             dateFrom = new Date();
             dateFrom.setUTCDate(dateFrom.getUTCDate() - 7);
@@ -22,7 +110,11 @@ class TrafficReportService extends Service {
         const dateTo = _.clone(dateFrom);
         dateTo.setUTCDate(dateTo.getUTCDate() + 7);
 
-        const scannerTrafficForWeek = await scannerTraffic.find({ hourTimestamp: { $gte: dateFrom.getTime(), $lt: dateTo.getTime()} });
+        const scannerTrafficForWeek = await ScannerTraffic.find({ hourTimestamp: { $gte: dateFrom.getTime(), $lt: dateTo.getTime()} });
+        if (scannerTrafficForWeek.length === 0) {
+            log.warning(`Not found scanner traffic for a week.`);
+            return true;
+        }
         const groupedScannerTraffic = _.groupBy(scannerTrafficForWeek, 'imei');
         const allImeiFromTraffic = Object.keys(groupedScannerTraffic);
         const scanners = await Scanner.find({ $or: _.map(allImeiFromTraffic, (imei) => ({ imei }))});
@@ -33,7 +125,7 @@ class TrafficReportService extends Service {
         });
 
 
-        await trafficReport.create(preparedReports);
+        await TrafficReport.create(preparedReports);
         return true;
     }
 
