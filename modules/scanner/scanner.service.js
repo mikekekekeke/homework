@@ -56,7 +56,7 @@ class ScannerService extends Service {
      * @param {String} city City where the scanner is placed.
      * @param {String} road Road number where the scanner is stationed.
      * @param {String} coordinates Coordinates of the scanner location.
-     * @param {String} status Status of scanner.
+     * @param {String} [status] Status of scanner.
      */
     async addScanner(name, imei, city, road, coordinates, status) {
 

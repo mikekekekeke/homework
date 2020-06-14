@@ -8,14 +8,15 @@ describe('Scanner service testing', () => {
     const Scanner = require('./scanner.model');
 
     const ERRORS = require('../../config/errors');
-    const { COMMON, PLACEHOLDER_ID } = require('../../config/model_constants');
+    const { COMMON, PLACEHOLDER_ID, SCANNER } = require('../../config/model_constants');
 
 
     const MOCK_NAME = 'Western Vilnius exit';
     const MOCK_IMEI = '3487248762746276487262';
     const MOCK_CITY = COMMON.CITY.VILNIUS;
     const MOCK_ROAD = 'a1';
-    
+    const MOCK_COORDINATES = '40.714, -74.006';
+
     describe('and the method addScanner shall', async () => {
 
         before(() => Scanner.deleteMany().exec());
@@ -42,9 +43,9 @@ describe('Scanner service testing', () => {
 
         it('throw a duplicate error if the scanner with same city and road exists', async () => {
 
-            await Scanner.create({ name: 'AAAAAAA', city: MOCK_CITY, imei: '312313131313', road: MOCK_ROAD.toUpperCase() });
+            await Scanner.create({ name: 'AAAAAAA', city: MOCK_CITY, imei: '312313131313', road: MOCK_ROAD.toUpperCase(), coordinates: MOCK_COORDINATES });
 
-            const [error] = await scannerService.addScanner(MOCK_NAME, MOCK_IMEI, MOCK_CITY, MOCK_ROAD).to();
+            const [error] = await scannerService.addScanner(MOCK_NAME, MOCK_IMEI, MOCK_CITY, MOCK_ROAD, MOCK_COORDINATES).to();
 
             expect(error).to.be.not.null;
             expect(error).to.be.instanceOf(DuplicateError);
@@ -55,7 +56,7 @@ describe('Scanner service testing', () => {
 
         it('create a new scanner if all conditions have met', async () => {
 
-            const new_scanner = await scannerService.addScanner(MOCK_NAME, MOCK_IMEI, MOCK_CITY, MOCK_ROAD);
+            const new_scanner = await scannerService.addScanner(MOCK_NAME, MOCK_IMEI, MOCK_CITY, MOCK_ROAD, MOCK_COORDINATES);
 
             expect(new_scanner).to.be.an('object');
 
@@ -78,10 +79,10 @@ describe('Scanner service testing', () => {
 
         before(() => Scanner.deleteMany().exec());
 
-        beforeEach(() => sinon.stub(scannerService, 'onImeiChange').callsFake(async () => null));
+        beforeEach(() => sinon.stub(scannerService, 'onScannerDataChange').callsFake(async () => null));
 
         afterEach(async () => {
-            scannerService.onImeiChange.restore();
+            scannerService.onScannerDataChange.restore();
 
             await Scanner.deleteMany().exec();
         });
@@ -98,7 +99,7 @@ describe('Scanner service testing', () => {
 
         it('not make any changes if the new values have not been passed', async () => {
 
-            const scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase() });
+            const scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase(), coordinates: MOCK_COORDINATES });
 
             await scannerService.editScanner(scanner._id);
 
@@ -107,13 +108,13 @@ describe('Scanner service testing', () => {
             expect(updated.name).to.equal(MOCK_NAME);
             expect(updated.imei).to.equal(MOCK_IMEI);
 
-            expect(scannerService.onImeiChange.called).to.be.be.false;
+            expect(scannerService.onScannerDataChange.called).to.be.be.false;
 
         });
 
-        it('update the name and imei an call onImeiChange', async () => {
+        it('update the name and imei an call onScannerDataChange', async () => {
 
-            const scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase() });
+            const scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase(), coordinates: MOCK_COORDINATES });
 
             await scannerService.editScanner(scanner._id, MOCK_NEW_NAME, MOCK_NEW_IMEI);
 
@@ -122,8 +123,8 @@ describe('Scanner service testing', () => {
             expect(updated.name).to.equal(MOCK_NEW_NAME);
             expect(updated.imei).to.equal(MOCK_NEW_IMEI);
 
-            expect(scannerService.onImeiChange.calledOnce).to.be.be.true;
-            expect(scannerService.onImeiChange.calledWith(scanner._id, MOCK_IMEI, MOCK_NEW_IMEI));
+            expect(scannerService.onScannerDataChange.calledOnce).to.be.be.true;
+            expect(scannerService.onScannerDataChange.calledWith(scanner._id, MOCK_IMEI, MOCK_NEW_IMEI));
 
         });
 
@@ -155,7 +156,7 @@ describe('Scanner service testing', () => {
 
         it('fetch scanner details and cache them in the process', async () => {
 
-            let scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase() });
+            let scanner = await Scanner.create({ name: MOCK_NAME, imei: MOCK_IMEI, city: MOCK_CITY, road: MOCK_ROAD.toUpperCase(), coordinates: MOCK_COORDINATES });
 
             scanner = await scannerService.fetchScanner(scanner._id);
 
@@ -196,10 +197,10 @@ describe('Scanner service testing', () => {
         it('return a list of scanners', async () => {
 
             await Promise.all([
-                Scanner.create({ name: 'A', city: COMMON.CITY.KAUNAS, road: 'A3', imei: '1' }),
-                Scanner.create({ name: 'B', city: COMMON.CITY.VILNIUS, road: 'B1', imei: '2' }),
-                Scanner.create({ name: 'C', city: COMMON.CITY.KLAIPEDA, road: 'A54', imei: '3' }),
-                Scanner.create({ name: 'D', city: COMMON.CITY.KAUNAS, road: '456', imei: '4' })
+                Scanner.create({ name: 'A', city: COMMON.CITY.KAUNAS, road: 'A3', imei: '1', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'B', city: COMMON.CITY.VILNIUS, road: 'B1', imei: '2', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'C', city: COMMON.CITY.KLAIPEDA, road: 'A54', imei: '3', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'D', city: COMMON.CITY.KAUNAS, road: '456', imei: '4', coordinates: MOCK_COORDINATES })
             ]);
 
             const result = await scannerService.fetchScanners();
@@ -213,7 +214,86 @@ describe('Scanner service testing', () => {
                 expect(s.name).to.be.a('string');
                 expect(Object.values(COMMON.CITY)).to.include(s.city);
                 expect(s.road).to.be.a('string');
+                expect(SCANNER.STATUSES.asArray).to.include(s.status);
+                expect(s.coordinates).to.be.a('string');
 
+            });
+
+        });
+
+    });
+
+    describe('and the method fetchScannersBasic shall', async () => {
+
+        before(() => Scanner.deleteMany().exec());
+
+        afterEach(() => Scanner.deleteMany().exec());
+
+        it('throw a validation error if the invalid params are passed', async () => {
+
+            return Promise.all([
+                [{ radius: 'radius' }],
+                [{ coordinates: 'coordinates' }],
+            ].map(async params => {
+
+                const [error] = await scannerService.fetchScannersBasic(...params).to();
+
+                expect(error).to.be.not.null;
+                expect(error).to.be.instanceOf(InputValidationError);
+
+            }));
+
+        });
+
+        it('return empty array when coordinates param of New York and radius param 10 meters, but scanner only exist in Los Angeles', async () => {
+
+            await Scanner.create({ name: 'A', city: COMMON.CITY.KAUNAS, road: 'A3', imei: '1', coordinates: '34.052235, -118.243683' });
+
+            const result = await scannerService.fetchScannersBasic(undefined, undefined,{ coordinates: MOCK_COORDINATES, radius: 10 });
+
+            expect(result).to.be.an('object');
+            expect(result.scanners).to.deep.equal([]);
+            expect(result.count).to.equal(0);
+
+        });
+
+        it('return not empty array when coordinates and radius are allowing find the scanner', async () => {
+
+            await Scanner.create({ name: 'A', city: COMMON.CITY.KAUNAS, road: 'A3', imei: '1', coordinates: '34.052235, -118.243683' });
+
+            const result = await scannerService.fetchScannersBasic(undefined, undefined, { coordinates: MOCK_COORDINATES, radius: 6300000 });
+
+            expect(result).to.be.an('object');
+            expect(result.count).to.equal(1);
+
+            result.scanners.forEach(s => {
+                expect(s._id).to.be.not.undefined;
+                expect(s.coordinates).to.be.a('string');
+                expect(SCANNER.STATUSES.asArray).to.include(s.status);
+                expect(s).to.have.property('lastSeen');
+            });
+
+        });
+
+        it('return a list of scanners', async () => {
+
+            await Promise.all([
+                Scanner.create({ name: 'A', city: COMMON.CITY.KAUNAS, road: 'A3', imei: '1', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'B', city: COMMON.CITY.VILNIUS, road: 'B1', imei: '2', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'C', city: COMMON.CITY.KLAIPEDA, road: 'A54', imei: '3', coordinates: MOCK_COORDINATES }),
+                Scanner.create({ name: 'D', city: COMMON.CITY.KAUNAS, road: '456', imei: '4', coordinates: MOCK_COORDINATES })
+            ]);
+
+            const result = await scannerService.fetchScannersBasic();
+
+            expect(result).to.be.an('object');
+            expect(result.count).to.equal(4);
+
+            result.scanners.forEach(s => {
+                expect(s._id).to.be.not.undefined;
+                expect(s.coordinates).to.be.a('string');
+                expect(SCANNER.STATUSES.asArray).to.include(s.status);
+                expect(s).to.have.property('lastSeen');
             });
 
         });
