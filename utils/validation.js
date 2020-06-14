@@ -3,6 +3,7 @@ Joi.objectId = require('joi-objectid')(Joi);
 
 const { ObjectId } = require('mongodb');
 const { COMMON, SCANNER } = require('../config/model_constants');
+const config = require('../config/config');
 
 module.exports = {
 
@@ -22,6 +23,12 @@ module.exports = {
         },
 
         scanner: {
+            basic: {
+                filters: Joi.object().keys({
+                    coordinates: Joi.string().optional(),
+                    radius: Joi.number().min(1).max(config.RADIUS_OF_EARTH_IN_KM * 1000).optional() // In meters radius
+                }).with('radius', 'coordinates').with('coordinates', 'radius'),
+            },
             road: Joi.string().uppercase().required().error(new InputValidationError('Road must be a non empty string')),
             coordinates: Joi.string().required().error(new InputValidationError('Coordinates has invalid format or not provided')),
             status: Joi.string().trim().valid(SCANNER.STATUSES.asArray).error(new InputValidationError('Invalid status')),

@@ -72,6 +72,8 @@ module.exports = {
         CACHE_TTL: 10 * 60
     },
 
+    RADIUS_OF_EARTH_IN_KM: 6371,
+
     JOBS: {
         TRAFFIC_REPORT: {
             ENABLED: (process.env.TRAFFIC_REPORT_JOB_ENABLED
