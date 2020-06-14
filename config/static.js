@@ -22,7 +22,7 @@ module.exports = {
         },
 
         SCANNER: {
-            ON_IMEI_CHANGE: 'on_imei_change'
+            ON_DATA_CHANGE: 'onScannerDataChange'
         }
     }),
 
