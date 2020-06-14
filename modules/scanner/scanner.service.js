@@ -1,6 +1,7 @@
 const Service = require('../../classes/Service');
 
 const Scanner = require('./scanner.model');
+const ScannerTraffic = require('../scannerTraffic/scannerTraffic.model');
 
 const ERRORS = require('../../config/errors');
 const CONFIG = require('../../config/config');
@@ -11,6 +12,62 @@ const { ObjectId } = require('mongodb');
 const { schemas, validateInput } = require('../../utils/validation');
 
 class ScannerService extends Service {
+
+    /**
+     * Verifies an imei of scanner.
+     */
+    async checkStatuses() {
+        const allScanners = await Scanner.find();
+        const scannersLastTraffic = await ScannerTraffic.aggregate([
+            {
+                $match:  { $or: _.map(allScanners, ({ imei }) => ({ imei }))}
+            },
+            {
+                $sort: { createdAt: -1 }
+            },
+            {
+                $group: {
+                    _id: '$imei',
+                    'createdAt': {
+                        $first: '$createdAt'
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    imei: '$_id',
+                    createdAt: 1
+                }
+            }
+          ]);
+
+        const diactivatedScannersAmount = await this._analyzeScannersActivityAndDiactivateIfNeed(allScanners, scannersLastTraffic);
+        return { scannersChecked: allScanners.length, scannersOutOfOrder: diactivatedScannersAmount };
+    }
+
+    async _analyzeScannersActivityAndDiactivateIfNeed(scanners, scannersLastTraffic) {
+        const promises = [];
+        scanners.map((scanner) => {
+            const scannerLastTraffic = _.find(scannersLastTraffic, ['imei', scanner.imei]);
+            if (this._detectIsScannerShouldBeOutOfOrder(scanner, scannerLastTraffic && scannerLastTraffic.createdAt)) {
+                scanner.status = SCANNER.STATUSES.asObject.OUT_OF_ORDER;
+                promises.push(scanner.save());
+            }
+        })
+        await Promise.all(promises);
+        return promises.length;
+    }
+
+    _detectIsScannerShouldBeOutOfOrder(scanner, lastActiveTime) {
+        if (scanner.status === SCANNER.STATUSES.asObject.OUT_OF_ORDER) return false;
+
+        const inactivityDeadline = new Date();
+        inactivityDeadline.setUTCHours(inactivityDeadline.getUTCHours() - CONFIG.SCANNER.INACTIVITY_DEADLINE_IN_HOURS);
+        if (!lastActiveTime) return scanner.created_at.getTime() < inactivityDeadline.getTime();
+        return lastActiveTime.getTime() < inactivityDeadline.getTime();
+    }
+
     /**
      * Verifies an imei of scanner.
      * @param {String} imei Imei of scanner.
