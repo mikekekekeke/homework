@@ -45,7 +45,12 @@ module.exports = {
 
         SCANNER: {
             DUPLICATE: 3000,
-            NOT_FOUND: 3001
+            NOT_FOUND: 3001,
+            INVALID_PARAMETER: 3002,
+        },
+
+        TRAFFIC_REPORT: {
+            NOT_FOUND: 4001
         }
 
     }

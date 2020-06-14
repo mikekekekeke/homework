@@ -1,5 +1,6 @@
 const { Schema } = require('mongoose');
 const { mongoose } = require('../../core/database');
+const { SCANNER: scannerConfig } = require('../../config/model_constants');
 
 const ScannerSchema = new Schema({
     name: {
@@ -18,6 +19,15 @@ const ScannerSchema = new Schema({
         type: String,
         required: true,
     },
+    status: {
+        type: String,
+        enum: scannerConfig.STATUSES.asArray,
+        default: scannerConfig.DEFAULT_STATUS,
+    },
+    coordinates: {
+        type: String,
+        required: true,
+    }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }, versionKey: false });
 
 ScannerSchema.index({ created_at: -1 });

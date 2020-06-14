@@ -5,6 +5,16 @@ const auth = require('../../middleware/auth');
 
 const scannerService = require('./scanner.service');
 
+router.get('v1/basic', auth(), async ctx => {
+
+    const { limit, offset, coordinates, radius } = ctx.query;
+
+    const [err, result] = await scannerService.fetchScannersBasic(limit, offset, { coordinates, radius }).to();
+
+    return Respond(ctx, err, result);
+
+});
+
 router.get('v1/', auth(), async ctx => {
 
     const { limit, offset, city, road } = ctx.query;
@@ -27,9 +37,9 @@ router.get('v1/:scanner_id', auth(), async ctx => {
 
 router.post('v1/', auth(), async ctx => {
 
-    const { name, imei, city, road } = ctx.request.body;
+    const { name, imei, city, road, coordinates, status } = ctx.request.body;
 
-    const [err, scanner] = await scannerService.addScanner(name, imei, city, road).to();
+    const [err, scanner] = await scannerService.addScanner(name, imei, city, road, coordinates, status).to();
 
     return Respond(ctx, err, scanner);
 
