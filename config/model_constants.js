@@ -43,6 +43,7 @@ module.exports = {
                 'active', 'inactive', 'out_of_order'
             ]
         },
+        UNKNOWN_COORDINATES: 'Unknown',
         DEFAULT_STATUS: 'active',
         DIRECTIONS: {
             asObject: {

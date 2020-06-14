@@ -5,7 +5,7 @@ module.exports = {
     up() {
         return Scanner.updateMany(
           { coordinates: { $exists: false }, status: { $exists: false } },
-          { $set: { coordinates: 'Unknown', status: ScannerService.getDefaultScannerStatus() }},
+          { $set: { coordinates: ScannerService.getUnknownScannerCoordinates(), status: ScannerService.getDefaultScannerStatus() }},
           { multi: true },
         )
     },
