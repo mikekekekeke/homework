@@ -99,6 +99,7 @@ class ScannerService extends Service {
         if(!scanner) throw new NotFoundError(`Scanner(${scanner_id})`, ERRORS.SUB_CODE.SCANNER.NOT_FOUND);
 
         const previous_imei = scanner.imei;
+        const previous_name = scanner.name;
 
         scanner.set({
             name: name || scanner.name,
@@ -107,20 +108,19 @@ class ScannerService extends Service {
 
         await scanner.save();
 
-        if(imei && previous_imei !== imei) this.emitter.dispatch(EVENTS.SCANNER.ON_IMEI_CHANGE, scanner._id, previous_imei, imei);
+        if ((imei && previous_imei !== imei)
+          || (name && name !== previous_name)) this.emitter.dispatch(EVENTS.SCANNER.ON_DATA_CHANGE, scanner);
 
         return scanner.toWeb();
 
     }
 
     /**
-     * @todo Handle IMEI changes here.
-     * @param {(ObjectId|String)} scanner_id Scanner database id.
-     * @param {String} previous_imei Previous IMEI.
-     * @param {String} new_imei new IMEI.
+     * Handles changes with scanner's data.
+     * @param {(Object)} updatedScanner Scanner updated with new data.
      */
-    async onImeiChange(scanner_id, previous_imei, new_imei) {
-
+    async onScannerDataChange(updatedScanner) {
+        this.cache.set(String(updatedScanner._id), updatedScanner.toWeb(), CONFIG.SCANNER.CACHE_TTL);
     }
 
     /**
