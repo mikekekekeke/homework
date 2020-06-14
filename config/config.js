@@ -63,7 +63,9 @@ module.exports = {
     },
 
     SCANNER: {
-        CACHE_TTL: 10 * 60
+        CACHE_TTL: 10 * 60,
+        INACTIVITY_DEADLINE_IN_HOURS: parseInt(process.env.SCANNERS_INACTIVITY_DEADLINE_IN_HOURS, 10)
+          || reportMissing('SCANNERS_INACTIVITY_DEADLINE_IN_HOURS', 24),
     },
 
     TRAFFIC_REPORT: {
@@ -72,7 +74,14 @@ module.exports = {
 
     JOBS: {
         TRAFFIC_REPORT: {
-            ENABLED: (process.env.TRAFFIC_REPORT_JOB_ENABLED === true.toString()),
+            ENABLED: (process.env.TRAFFIC_REPORT_JOB_ENABLED
+              || reportMissing('TRAFFIC_REPORT_JOB_ENABLED', false)) === true.toString(),
+        },
+        CHECKING_SCANNERS_STATUS: {
+            ENABLED: (process.env.CHECKING_SCANNERS_STATUS_JOB_ENABLED
+              || reportMissing('CHECKING_SCANNERS_STATUS_JOB_ENABLED', false) === true.toString()),
+            SCHEDULE: process.env.CHECKING_SCANNERS_STATUS_JOB_SCHEDULE
+              || reportMissing('CHECKING_SCANNERS_STATUS_JOB_SCHEDULE'),
         }
     }
 };

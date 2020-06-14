@@ -11,13 +11,17 @@ class ScannerTrafficService extends Service {
      * Adds a scanner traffic scans.
      * @param {String} imei IMEI of the scanner.
      * @param {Array} scans Scanner's records to save.
-     * @param {String} scannerStatus Scanner's status.
+     * @param {Object} scanner Scanner.
      */
-    async saveScans(imei, scans, scannerStatus) {
+    async saveScans(imei, scans, scanner) {
 
         scans = validateInput(scans, schemas.scanner.traffic.scans);
 
-        if (scannerStatus === scannerConfig.STATUSES.asObject.INACTIVE) return { scans: 0 };
+        if (scanner.status === scannerConfig.STATUSES.asObject.INACTIVE) return { scans: 0 };
+        if (scanner.status === scannerConfig.STATUSES.asObject.OUT_OF_ORDER) {
+            scanner.status = scannerConfig.STATUSES.asObject.ACTIVE;
+            await scanner.save();
+        }
 
         const trafficGroupedByHourTimestamp = this._splitScansInDayHours(scans);
         const lastScannerTraffic = await ScannerTraffic.findOne({ imei }).sort({_id: 'desc'}).exec();

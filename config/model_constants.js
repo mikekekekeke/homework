@@ -37,9 +37,10 @@ module.exports = {
             asObject: {
                 ACTIVE: 'active',
                 INACTIVE: 'inactive',
+                OUT_OF_ORDER: 'out_of_order',
             },
             asArray: [
-                'active', 'inactive'
+                'active', 'inactive', 'out_of_order'
             ]
         },
         DEFAULT_STATUS: 'active',

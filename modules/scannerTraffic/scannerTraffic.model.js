@@ -20,7 +20,7 @@ const ScannerTrafficSchema = new Schema({
             required: true,
         },
     },
-}, { timestamps: { updatedAt: 'updated_at' }, versionKey: false });
+}, { versionKey: false });
 
 ScannerTrafficSchema.index({ hourTimestamp: 1, imei: 1 }, { unique: true });
 
